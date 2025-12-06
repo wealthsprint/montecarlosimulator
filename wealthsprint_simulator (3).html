@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏆 WealthSprint Monte Carlo Wealth Simulator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .chart-container {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            position: relative;
+            height: 400px;
+        }
+
+        .results-section {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .result-card.success {
+            border-left-color: #10b981;
+        }
+
+        .result-card.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .result-card.danger {
+            border-left-color: #ef4444;
+        }
+
+        .result-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .result-card .value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .result-card.success .value {
+            color: #10b981;
+        }
+
+        .result-card.warning .value {
+            color: #f59e0b;
+        }
+
+        .result-card.danger .value {
+            color: #ef4444;
+        }
+
+        .retirement-section {
+            grid-column: 1 / -1;
+            background: #f0f4ff;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #667eea;
+        }
+
+        .retirement-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .retirement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .retirement-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .retirement-item-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .retirement-item-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .gap-analysis {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .gap-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .gap-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .swp-section {
+            grid-column: 1 / -1;
+            background: #e6f7ff;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #3b82f6;
+        }
+
+        .swp-section h2 {
+            color: #3b82f6;
+        }
+
+        .swp-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .swp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .swp-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .swp-item-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .swp-item-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+
+        .swp-chart-container {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            margin-top: 20px;
+            height: 400px;
+            position: relative;
+        }
+
+        .what-will-it-take {
+            grid-column: 1 / -1;
+            background: #fff5e6;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #f59e0b;
+        }
+
+        .what-will-it-take h2 {
+            color: #f59e0b;
+        }
+
+        .sip-recommendation {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .sip-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #f59e0b;
+        }
+
+        .sip-card h4 {
+            color: #f59e0b;
+            margin-bottom: 10px;
+        }
+
+        .sip-value {
+            font-size: 1.6em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .note {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #92400e;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .swp-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 WealthSprint Monte Carlo Wealth Simulator</h1>
+            <p>Project your wealth with confidence using Monte Carlo simulations</p>
+        </div>
+
+        <div class="content">
+            <!-- Input Section -->
+            <div class="section">
+                <h2>📊 Simulation Parameters</h2>
+
+                <div class="input-group">
+                    <label>Current Age (Years)</label>
+                    <input type="number" id="currentAge" value="35" min="18" max="100">
+                </div>
+
+                <div class="input-group">
+                    <label>Retirement Age (Years)</label>
+                    <input type="number" id="retirementAge" value="60" min="18" max="100">
+                </div>
+
+                <div class="input-group">
+                    <label>Current Portfolio Value (₹)</label>
+                    <input type="number" id="currentPortfolio" value="5000000" min="0" step="10000">
+                </div>
+
+                <div class="input-group">
+                    <label>Monthly SIP (₹)</label>
+                    <input type="number" id="monthlySIP" value="25000" min="0" step="1000">
+                </div>
+
+                <div class="input-group">
+                    <label>Target Corpus (₹)</label>
+                    <input type="number" id="targetCorpus" value="100000000" min="0" step="100000">
+                </div>
+
+                <div class="input-group">
+                    <label>Preserve for Family (₹)</label>
+                    <input type="number" id="preserveForFamily" value="180000000" min="0" step="1000000">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="runSimulation()">🚀 Run Simulation</button>
+                    <button class="btn-secondary" onclick="resetForm()">↺ Reset</button>
+                </div>
+            </div>
+
+            <!-- Market Parameters Section -->
+            <div class="section">
+                <h2>📈 Market Parameters</h2>
+
+                <div class="input-group">
+                    <label>Low Return Range - Accumulation (%)</label>
+                    <input type="number" id="lowReturn" value="8" min="0" max="50" step="0.5">
+                </div>
+
+                <div class="input-group">
+                    <label>High Return Range - Accumulation (%)</label>
+                    <input type="number" id="highReturn" value="16" min="0" max="50" step="0.5">
+                </div>
+
+                <div class="input-group">
+                    <label>Low Return Range - Retirement (%)</label>
+                    <input type="number" id="lowReturnRetirement" value="6" min="0" max="50" step="0.5">
+                </div>
+
+                <div class="input-group">
+                    <label>High Return Range - Retirement (%)</label>
+                    <input type="number" id="highReturnRetirement" value="12" min="0" max="50" step="0.5">
+                </div>
+
+                <div class="input-group">
+                    <label>Annual Volatility (Std Dev %)</label>
+                    <input type="number" id="volatility" value="15" min="0" max="50" step="0.5">
+                </div>
+
+                <div class="input-group">
+                    <label>Accumulation Inflation (%)</label>
+                    <input type="number" id="accumulationInflation" value="6" min="0" max="15" step="0.5">
+                </div>
+
+                <div class="input-group">
+                    <label>Retirement Inflation (%)</label>
+                    <input type="number" id="retirementInflation" value="5" min="0" max="15" step="0.5">
+                </div>
+
+                <div class="input-group">
+                    <label>Number of Simulations</label>
+                    <input type="number" id="simulations" value="10000" min="100" max="50000" step="100">
+                </div>
+
+                <div class="input-group">
+                    <label>Current Annual Expenses (₹)</label>
+                    <input type="number" id="currentExpenses" value="600000" min="0" step="10000">
+                </div>
+
+                <div class="input-group">
+                    <label>Retirement Life Expectancy (Years)</label>
+                    <input type="number" id="lifeExpectancy" value="30" min="1" max="50">
+                </div>
+
+                <div class="input-group">
+                    <label>Safe Withdrawal Rate (SWP %) - typically 3-4%</label>
+                    <input type="number" id="swpRate" value="4" min="0.5" max="5" step="0.1">
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection" style="display:none;">
+                <div class="result-card" id="p10Card">
+                    <h3>P10 (Worst Case)</h3>
+                    <div class="value" id="p10Value">-</div>
+                </div>
+                <div class="result-card" id="p50Card">
+                    <h3>P50 (Median)</h3>
+                    <div class="value" id="p50Value">-</div>
+                </div>
+                <div class="result-card" id="p90Card">
+                    <h3>P90 (Best Case)</h3>
+                    <div class="value" id="p90Value">-</div>
+                </div>
+                <div class="result-card" id="successCard">
+                    <h3>Success Rate</h3>
+                    <div class="value" id="successValue">-</div>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-container" id="chartContainer" style="display:none;">
+                <canvas id="wealthChart"></canvas>
+            </div>
+
+            <!-- Retirement Planning Section -->
+            <div class="retirement-section" id="retirementSection" style="display:none;">
+                <h2>🏖️ Retirement Planning Analysis</h2>
+                <div class="retirement-grid">
+                    <div class="retirement-item">
+                        <div class="retirement-item-label">Years to Retirement</div>
+                        <div class="retirement-item-value" id="yearsToRetirement">-</div>
+                    </div>
+                    <div class="retirement-item">
+                        <div class="retirement-item-label">Inflation-Adjusted Annual Expense (Year 1)</div>
+                        <div class="retirement-item-value" id="adjustedExpenses">-</div>
+                    </div>
+                    <div class="retirement-item">
+                        <div class="retirement-item-label">Safe Withdrawal Rate (4% Rule)</div>
+                        <div class="retirement-item-value" id="safeWithdrawal">-</div>
+                    </div>
+                    <div class="retirement-item">
+                        <div class="retirement-item-label">Retirement Corpus Needed (NPV)</div>
+                        <div class="retirement-item-value" id="corpusNeeded">-</div>
+                    </div>
+                </div>
+                <div class="gap-analysis">
+                    <strong>Gap Analysis (P50 vs Retirement Needs):</strong>
+                    <div id="gapAnalysisText" style="margin-top: 10px; color: #333;"></div>
+                    <div class="gap-bar">
+                        <div class="gap-fill" id="gapFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SWP Section -->
+            <div class="swp-section" id="swpSection" style="display:none;">
+                <h2>💰 Retire Safely</h2>
+
+                <div class="swp-controls">
+                    <div class="input-group">
+                        <label>Check Family Legacy at Year:</label>
+                        <select id="legacyCheckYear" onchange="updateLegacyResults()">
+                            <option value="10">10 Years</option>
+                            <option value="15">15 Years</option>
+                            <option value="20">20 Years</option>
+                            <option value="25">25 Years</option>
+                            <option value="30" selected>30 Years</option>
+                        </select>
+                    </div>
+                    <div class="retirement-item" style="background: white; border-left: 4px solid #3b82f6;">
+                        <div class="retirement-item-label">Corpus at Selected Year (P50)</div>
+                        <div class="retirement-item-value" id="corpusAtYear" style="color: #3b82f6;">-</div>
+                    </div>
+                </div>
+
+                <div class="swp-grid">
+                    <div class="swp-item">
+                        <div class="swp-item-label">Monthly SWP Amount (Year 1)</div>
+                        <div class="swp-item-value" id="monthlySWP">-</div>
+                    </div>
+                    <div class="swp-item">
+                        <div class="swp-item-label">Annual SWP Amount (Year 1)</div>
+                        <div class="swp-item-value" id="annualSWP">-</div>
+                    </div>
+                    <div class="swp-item">
+                        <div class="swp-item-label">Can Preserve Family Legacy at <span id="legacyYearsDisplay">30</span> Years?</div>
+                        <div class="swp-item-value" id="canPreserveStatus">-</div>
+                    </div>
+                    <div class="swp-item">
+                        <div class="swp-item-label">Preserve Target (₹18 Cr)</div>
+                        <div class="swp-item-value" id="preserveTargetDisplay">-</div>
+                    </div>
+                </div>
+                <div class="note">
+                    💡 Select a year to check if your family legacy corpus will be preserved. Corpus grows/shrinks based on Monte Carlo retirement returns (6-12%) and inflation-adjusted withdrawals.
+                </div>
+                <div class="swp-chart-container" id="swpChartContainer" style="display:none;">
+                    <canvas id="swpChart"></canvas>
+                </div>
+            </div>
+
+            <!-- What Will It Take Section -->
+            <div class="what-will-it-take" id="whatWillItTakeSection" style="display:none;">
+                <h2>🎯 What Will It Take? - SIP Recommendations</h2>
+                <p style="color: #666; margin-bottom: 15px;">To achieve your target corpus of <strong id="targetCorpusDisplay">-</strong> with <strong id="sipSuccessRates">-</strong> probability:</p>
+                <div class="sip-recommendation">
+                    <div class="sip-card">
+                        <h4>50% Success</h4>
+                        <div class="sip-value" id="sip50">-</div>
+                        <p style="color: #999; font-size: 0.9em; margin-top: 5px;">Monthly SIP needed</p>
+                    </div>
+                    <div class="sip-card">
+                        <h4>75% Success</h4>
+                        <div class="sip-value" id="sip75">-</div>
+                        <p style="color: #999; font-size: 0.9em; margin-top: 5px;">Monthly SIP needed</p>
+                    </div>
+                    <div class="sip-card">
+                        <h4>90% Success</h4>
+                        <div class="sip-value" id="sip90">-</div>
+                        <p style="color: #999; font-size: 0.9em; margin-top: 5px;">Monthly SIP needed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🎯 WealthSprint Simulator | Full Monte Carlo Analysis for Accumulation & Retirement | India-Specific Parameters</p>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+        let swpChart = null;
+        let swpDataGlobal = null;
+        let preserveForFamilyGlobal = null;
+
+        function runSimulation() {
+            const currentAge = parseInt(document.getElementById('currentAge').value);
+            const retirementAge = parseInt(document.getElementById('retirementAge').value);
+            const currentPortfolio = parseFloat(document.getElementById('currentPortfolio').value);
+            const monthlySIP = parseFloat(document.getElementById('monthlySIP').value);
+            const targetCorpus = parseFloat(document.getElementById('targetCorpus').value);
+            const preserveForFamily = parseFloat(document.getElementById('preserveForFamily').value);
+            preserveForFamilyGlobal = preserveForFamily;
+            const lowReturn = parseFloat(document.getElementById('lowReturn').value) / 100;
+            const highReturn = parseFloat(document.getElementById('highReturn').value) / 100;
+            const lowReturnRetirement = parseFloat(document.getElementById('lowReturnRetirement').value) / 100;
+            const highReturnRetirement = parseFloat(document.getElementById('highReturnRetirement').value) / 100;
+            const volatility = parseFloat(document.getElementById('volatility').value) / 100;
+            const accumulationInflation = parseFloat(document.getElementById('accumulationInflation').value) / 100;
+            const retirementInflation = parseFloat(document.getElementById('retirementInflation').value) / 100;
+            const numSimulations = parseInt(document.getElementById('simulations').value);
+            const currentExpenses = parseFloat(document.getElementById('currentExpenses').value);
+            const lifeExpectancy = parseInt(document.getElementById('lifeExpectancy').value);
+            const swpRate = parseFloat(document.getElementById('swpRate').value) / 100;
+
+            const yearsToRetirement = retirementAge - currentAge;
+            const monthsToRetirement = yearsToRetirement * 12;
+
+            // Run Monte Carlo Simulations for ACCUMULATION phase
+            let finalValues = [];
+
+            for (let sim = 0; sim < numSimulations; sim++) {
+                let portfolio = currentPortfolio;
+
+                for (let month = 0; month < monthsToRetirement; month++) {
+                    const randomReturn = lowReturn + Math.random() * (highReturn - lowReturn);
+                    const monthlyReturn = (randomReturn / 12) + ((Math.random() - 0.5) * (volatility / Math.sqrt(12)));
+                    portfolio = portfolio * (1 + monthlyReturn) + monthlySIP;
+                }
+
+                finalValues.push(portfolio);
+            }
+
+            // Sort results
+            finalValues.sort((a, b) => a - b);
+
+            // Calculate percentiles
+            const p10 = finalValues[Math.floor(numSimulations * 0.1)];
+            const p50 = finalValues[Math.floor(numSimulations * 0.5)];
+            const p90 = finalValues[Math.floor(numSimulations * 0.9)];
+
+            // Success rate calculation
+            const successCount = finalValues.filter(v => v >= targetCorpus).length;
+            const successRate = (successCount / numSimulations) * 100;
+
+            // Update results
+            document.getElementById('p10Value').textContent = '₹' + formatCurrency(p10);
+            document.getElementById('p50Value').textContent = '₹' + formatCurrency(p50);
+            document.getElementById('p90Value').textContent = '₹' + formatCurrency(p90);
+            document.getElementById('successValue').textContent = successRate.toFixed(1) + '%';
+
+            // Update card colors
+            document.getElementById('successCard').className = 'result-card ' + 
+                (successRate >= 90 ? 'success' : successRate >= 75 ? 'warning' : 'danger');
+
+            // Calculate retirement metrics
+            const inflationFactorAccum = Math.pow(1 + accumulationInflation, yearsToRetirement);
+            const adjustedAnnualExpenses = currentExpenses * inflationFactorAccum;
+
+            // Corpus needed
+            let corpusNeeded = 0;
+            for (let year = 0; year < lifeExpectancy; year++) {
+                const expenseInYear = adjustedAnnualExpenses * Math.pow(1 + retirementInflation, year);
+                corpusNeeded += expenseInYear / Math.pow(1.04, year);
+            }
+
+            const safeWithdrawal = p50 * swpRate;
+
+            document.getElementById('yearsToRetirement').textContent = yearsToRetirement + ' years';
+            document.getElementById('adjustedExpenses').textContent = '₹' + formatCurrency(adjustedAnnualExpenses);
+            document.getElementById('safeWithdrawal').textContent = '₹' + formatCurrency(safeWithdrawal);
+            document.getElementById('corpusNeeded').textContent = '₹' + formatCurrency(corpusNeeded);
+
+            // Gap analysis
+            const gap = Math.max(0, corpusNeeded - p50);
+            const gapPercentage = (Math.min(1, p50 / corpusNeeded)) * 100;
+            const gapText = gap > 0 ? 
+                `Gap of ₹${formatCurrency(gap)} from ideal corpus (${(100 - gapPercentage).toFixed(1)}% shortfall)` :
+                `Surplus of ₹${formatCurrency(-gap)} above retirement needs!`;
+
+            document.getElementById('gapAnalysisText').textContent = gapText;
+            document.getElementById('gapFill').style.width = Math.min(100, gapPercentage) + '%';
+
+            // SWP Calculation with Monte Carlo RETIREMENT returns
+            const annualSWP = safeWithdrawal;
+            const monthlySWPAmount = annualSWP / 12;
+
+            // Simulate corpus drawdown during RETIREMENT with MC returns
+            let corpusP50 = p50;
+            let swpData = [{year: 0, withdrawal: 0, corpus: corpusP50}];
+
+            for (let year = 1; year <= lifeExpectancy; year++) {
+                // Each month in retirement, apply Monte Carlo returns
+                for (let month = 0; month < 12; month++) {
+                    // Random return from retirement range
+                    const randomRetirementReturn = lowReturnRetirement + Math.random() * (highReturnRetirement - lowReturnRetirement);
+                    const monthlyRetirementReturn = (randomRetirementReturn / 12) + ((Math.random() - 0.5) * (volatility / Math.sqrt(12)));
+
+                    // Apply growth
+                    corpusP50 = corpusP50 * (1 + monthlyRetirementReturn);
+
+                    // Withdraw monthly (inflation-adjusted)
+                    const monthlyWithdrawal = annualSWP * Math.pow(1 + retirementInflation, year - 1) / 12;
+                    corpusP50 -= monthlyWithdrawal;
+                }
+
+                const inflatedSWP = annualSWP * Math.pow(1 + retirementInflation, year - 1);
+                swpData.push({year: year, withdrawal: inflatedSWP, corpus: Math.max(0, corpusP50)});
+            }
+
+            swpDataGlobal = swpData;
+
+            document.getElementById('monthlySWP').textContent = '₹' + formatCurrency(monthlySWPAmount);
+            document.getElementById('annualSWP').textContent = '₹' + formatCurrency(annualSWP);
+            document.getElementById('preserveTargetDisplay').textContent = '₹' + formatCurrency(preserveForFamily);
+
+            // What Will It Take
+            document.getElementById('targetCorpusDisplay').textContent = '₹' + formatCurrency(targetCorpus);
+            document.getElementById('sipSuccessRates').textContent = successRate.toFixed(1) + '%';
+
+            const sip50 = calculateRequiredSIP(currentPortfolio, targetCorpus, lowReturn, highReturn, volatility, monthsToRetirement, 0.50);
+            const sip75 = calculateRequiredSIP(currentPortfolio, targetCorpus, lowReturn, highReturn, volatility, monthsToRetirement, 0.75);
+            const sip90 = calculateRequiredSIP(currentPortfolio, targetCorpus, lowReturn, highReturn, volatility, monthsToRetirement, 0.90);
+
+            document.getElementById('sip50').textContent = '₹' + formatCurrency(sip50);
+            document.getElementById('sip75').textContent = '₹' + formatCurrency(sip75);
+            document.getElementById('sip90').textContent = '₹' + formatCurrency(sip90);
+
+            // Show sections
+            document.getElementById('resultsSection').style.display = 'grid';
+            document.getElementById('retirementSection').style.display = 'block';
+            document.getElementById('swpSection').style.display = 'block';
+            document.getElementById('whatWillItTakeSection').style.display = 'block';
+
+            // Update charts and legacy results
+            updateChart(finalValues, p10, p50, p90, targetCorpus);
+            updateLegacyResults();
+        }
+
+        function updateLegacyResults() {
+            if (!swpDataGlobal) return;
+
+            const selectedYear = parseInt(document.getElementById('legacyCheckYear').value);
+            const corpusAtYear = swpDataGlobal[selectedYear] ? swpDataGlobal[selectedYear].corpus : swpDataGlobal[swpDataGlobal.length - 1].corpus;
+
+            const canPreserve = corpusAtYear >= preserveForFamilyGlobal;
+            const preserveStatus = canPreserve ? '✅ YES' : '❌ NO';
+            const preserveColor = canPreserve ? '#10b981' : '#ef4444';
+
+            document.getElementById('corpusAtYear').textContent = '₹' + formatCurrency(corpusAtYear);
+            document.getElementById('canPreserveStatus').textContent = preserveStatus;
+            document.getElementById('canPreserveStatus').style.color = preserveColor;
+            document.getElementById('legacyYearsDisplay').textContent = selectedYear;
+
+            updateSWPChart(swpDataGlobal, preserveForFamilyGlobal, selectedYear);
+        }
+
+        function calculateRequiredSIP(currentPortfolio, targetCorpus, lowReturn, highReturn, volatility, months, targetProbability) {
+            let lowSIP = 0;
+            let highSIP = 500000;
+
+            for (let iteration = 0; iteration < 20; iteration++) {
+                const testSIP = (lowSIP + highSIP) / 2;
+                let successCount = 0;
+
+                for (let sim = 0; sim < 1000; sim++) {
+                    let portfolio = currentPortfolio;
+                    for (let month = 0; month < months; month++) {
+                        const randomReturn = lowReturn + Math.random() * (highReturn - lowReturn);
+                        const monthlyReturn = (randomReturn / 12) + ((Math.random() - 0.5) * (volatility / Math.sqrt(12)));
+                        portfolio = portfolio * (1 + monthlyReturn) + testSIP;
+                    }
+                    if (portfolio >= targetCorpus) successCount++;
+                }
+
+                const probability = successCount / 1000;
+                if (probability < targetProbability) {
+                    lowSIP = testSIP;
+                } else {
+                    highSIP = testSIP;
+                }
+            }
+
+            return highSIP;
+        }
+
+        function updateChart(values, p10, p50, p90, target) {
+            const ctx = document.getElementById('wealthChart').getContext('2d');
+
+            const bins = 50;
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const binWidth = (max - min) / bins;
+            const histogram = new Array(bins).fill(0);
+
+            values.forEach(val => {
+                const binIndex = Math.floor((val - min) / binWidth);
+                if (binIndex < bins) histogram[binIndex]++;
+            });
+
+            const binLabels = Array.from({length: bins}, (_, i) => 
+                formatCurrency(min + i * binWidth)
+            );
+
+            if (chart) chart.destroy();
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: binLabels,
+                    datasets: [{
+                        label: 'Simulation Distribution',
+                        data: histogram,
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        title: { display: true, text: 'Wealth Distribution at Retirement (Accumulation Phase)' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Frequency' } },
+                        x: { display: false }
+                    }
+                }
+            });
+
+            document.getElementById('chartContainer').style.display = 'block';
+        }
+
+        function updateSWPChart(swpData, preserveTarget, highlightYear) {
+            const ctx = document.getElementById('swpChart').getContext('2d');
+
+            const years = swpData.map(d => 'Yr ' + d.year);
+            const withdrawals = swpData.map(d => d.withdrawal);
+            const corpus = swpData.map(d => d.corpus);
+
+            if (swpChart) swpChart.destroy();
+
+            swpChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [
+                        {
+                            label: 'Remaining Corpus (₹)',
+                            data: corpus,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Annual SWP (₹)',
+                            data: withdrawals,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Preserve Target (₹)',
+                            data: Array(years.length).fill(preserveTarget),
+                            borderColor: '#ef4444',
+                            borderDash: [5, 5],
+                            borderWidth: 2,
+                            fill: false,
+                            yAxisID: 'y'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        title: { display: true, text: 'SWP Corpus Trajectory - Year ' + highlightYear + ' (Checked for Legacy)' }
+                    },
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Corpus (₹)' } },
+                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Annual Withdrawal (₹)' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+
+            document.getElementById('swpChartContainer').style.display = 'block';
+        }
+
+        function formatCurrency(value) {
+            if (value >= 10000000) {
+                return (value / 10000000).toFixed(1) + ' Cr';
+            } else if (value >= 100000) {
+                return (value / 100000).toFixed(1) + ' L';
+            } else if (value >= 1000) {
+                return (value / 1000).toFixed(1) + 'K';
+            }
+            return value.toFixed(0);
+        }
+
+        function resetForm() {
+            document.getElementById('currentAge').value = 35;
+            document.getElementById('retirementAge').value = 60;
+            document.getElementById('currentPortfolio').value = 5000000;
+            document.getElementById('monthlySIP').value = 25000;
+            document.getElementById('targetCorpus').value = 100000000;
+            document.getElementById('preserveForFamily').value = 180000000;
+            document.getElementById('lowReturn').value = 8;
+            document.getElementById('highReturn').value = 16;
+            document.getElementById('lowReturnRetirement').value = 6;
+            document.getElementById('highReturnRetirement').value = 12;
+            document.getElementById('volatility').value = 15;
+            document.getElementById('accumulationInflation').value = 6;
+            document.getElementById('retirementInflation').value = 5;
+            document.getElementById('legacyCheckYear').value = 30;
+            document.getElementById('simulations').value = 10000;
+            document.getElementById('currentExpenses').value = 600000;
+            document.getElementById('lifeExpectancy').value = 30;
+            document.getElementById('swpRate').value = 4;
+
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('retirementSection').style.display = 'none';
+            document.getElementById('swpSection').style.display = 'none';
+            document.getElementById('whatWillItTakeSection').style.display = 'none';
+            document.getElementById('chartContainer').style.display = 'none';
+            document.getElementById('swpChartContainer').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
